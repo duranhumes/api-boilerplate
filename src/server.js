@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import compression from 'compression';
 import express from 'express';
 import morgan from 'morgan';
