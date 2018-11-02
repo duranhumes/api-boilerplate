@@ -9,9 +9,10 @@ const jwtOptions = {
     jwtFromRequest: ExtractJwt.fromHeader('authorization'),
     secretOrKey: String(process.env.JWT_SECRET),
     issuer: String(process.env.JWT_ISSUER),
+    passReqToCallback: true,
 };
 
-export const jwtLogin = new Strategy(jwtOptions, async (payload, done) => {
+export const jwtLogin = new Strategy(jwtOptions, async (req, payload, done) => {
     // Users Id
     const id = payload.sub;
     const timestamp = new Date().getTime();
@@ -34,6 +35,8 @@ export const jwtLogin = new Strategy(jwtOptions, async (payload, done) => {
     if (!user || isEmpty(user)) {
         return done(null, false);
     }
+
+    req.user = user;
 
     return done(null, user);
 });
