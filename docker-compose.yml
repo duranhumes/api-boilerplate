@@ -1,11 +1,11 @@
-version: '3'
+version: '3.2'
 services:
     mongo:
         container_name: mongo
-        image: mongo:latest
+        build: ./database
         restart: unless-stopped
         volumes:
-            - ./data:/data/db
+            - ./database/data:/data/db
         ports:
             - '27017:27017'
     api:
