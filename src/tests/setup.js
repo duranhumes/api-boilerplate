@@ -1,7 +1,7 @@
-process.env.NODE_ENV = 'test';
+import 'babel-polyfill'
 
-import 'babel-polyfill';
+import { server } from '..'
 
-import { server } from '..';
+process.env.NODE_ENV = 'test'
 
-export default server;
+export default server

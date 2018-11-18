@@ -2,10 +2,10 @@ version: '3.2'
 services:
     mongo:
         container_name: mongo
-        build: ./database
+        image: mongo:latest
         restart: unless-stopped
         volumes:
-            - ./database/data:/data/db
+            - ./mongo/data:/data/db
         ports:
             - '27017:27017'
     api:

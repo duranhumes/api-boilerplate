@@ -1,30 +1,29 @@
-import { Router } from 'express';
+import { Router } from 'express'
 
-import Controller from '../Controller';
-import requireLogin from '../../lib/middleware/requireLogin';
+import Controller from '../Controller'
+import requireLogin from '../../lib/middleware/requireLogin'
 
 class LogoutController extends Controller {
     constructor() {
-        super();
+        super()
 
-        this.router = Router();
-        this.routes();
+        this.router = Router()
+        this.routes()
     }
 
     routes() {
-        this.router.post('/', requireLogin, this.logout);
+        this.router.post('/', requireLogin, this.logout)
     }
 
-    logout = async (_, res) => {
-        // TODO: Implement logout
+    logout = (req, res) => {
+        req.user = null
+        delete req.user
 
-        res.sendStatus(200);
+        res.user = null
+        delete res.user
 
-        return;
-    };
+        return res.sendStatus(200)
+    }
 }
 
-const logoutController = new LogoutController();
-const controller = logoutController.router;
-
-export default controller;
+export default new LogoutController().router

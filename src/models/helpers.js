@@ -1,5 +1,4 @@
-import { reject } from '../lib/helpers/reject';
-import { isEmpty } from '../lib/helpers/isEmpty';
+import { reject, isEmpty } from '../lib/utils'
 
 /**
  *
@@ -11,16 +10,16 @@ import { isEmpty } from '../lib/helpers/isEmpty';
  */
 export function filteredModel(model, fields) {
     if (!model || isEmpty(model)) {
-        throw new Error('Model param must be supplied.');
+        throw new Error('Model param must be supplied.')
     }
 
-    let fieldsToExclude = ['password', '_id', '__v', '$__', '$init', 'isNew'];
+    let fieldsToExclude = ['password', '_id', '__v', '$__', '$init', 'isNew']
     if (fields) {
         if (!Array.isArray(fields)) {
-            throw new Error('Fields parameter must be an array.');
+            throw new Error('Fields parameter must be an array.')
         }
 
-        fieldsToExclude = [...fieldsToExclude, ...fields];
+        fieldsToExclude = [...fieldsToExclude, ...fields]
     }
 
     /**
@@ -28,10 +27,29 @@ export function filteredModel(model, fields) {
      * and return the new array.
      */
     if (Array.isArray(model)) {
-        return model.map(m => reject(m, fieldsToExclude));
+        return model.map(m =>
+            isPlainObject(m)
+                ? reject(m, fieldsToExclude)
+                : reject(m.toObject(), fieldsToExclude)
+        )
     }
 
-    const modelObj = model.toObject();
+    return reject(model.toObject(), fieldsToExclude)
+}
 
-    return reject(modelObj, fieldsToExclude);
+/**
+ * Check if object is plain or has extra properties
+ * like a mongoose model.
+ *
+ * @param {object} obj
+ *
+ * @returns {boolean}
+ */
+function isPlainObject(obj) {
+    return (
+        typeof obj === 'object' &&
+        obj !== null &&
+        obj.constructor === Object &&
+        Object.prototype.toString.call(obj) === '[object Object]'
+    )
 }

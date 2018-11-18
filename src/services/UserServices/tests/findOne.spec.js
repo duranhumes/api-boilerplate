@@ -1,64 +1,49 @@
-import chai from 'chai';
-import chaiPromises from 'chai-as-promised';
-import faker from 'faker';
+import chai from 'chai'
+import chaiPromises from 'chai-as-promised'
+import faker from 'faker'
 
-import { create, findOne } from '../';
+import { create, findOne } from '../'
+import { promisify } from '../../../lib/utils'
 
-chai.use(chaiPromises);
-const expect = chai.expect;
+chai.use(chaiPromises)
+const expect = chai.expect
 
-let gUser = null;
+describe('=> Find one user service <=', () => {
+    it('=> should return 404 if user does not exist.', async () => {
+        const [user, userErr] = await promisify(
+            findOne('email', 'email123-that-doesnt-exist@gmail.com')
+        )
 
-before(done => {
-    create({
-        username: faker.internet.userName(),
-        firstName: faker.name.firstName(),
-        lastName: faker.name.lastName(),
-        email: faker.internet.email(),
-        password: faker.internet.password(),
-    }).then(u => {
-        gUser = u;
-        done();
-    });
-});
+        expect(user).to.not.exist
+        expect(userErr.code).to.equal(404)
+        expect(userErr.message.toString()).to.equal('User not found')
+    })
+    it('=> should find a user by the given key value pair', async () => {
+        const [user, userErr] = await promisify(
+            create({
+                userName: faker.internet.userName(),
+                firstName: faker.name.firstName(),
+                lastName: faker.name.lastName(),
+                email: faker.internet.email(),
+                password: 'My_passwd@12',
+            })
+        )
+        expect(userErr).to.not.exist
 
-describe('Find one user service', () => {
-    it('should return 404 if user does not exist.', async () => {
-        try {
-            await findOne('id', 'f1cc428f-5bca-4991-afd4-a120f400cce1');
-        } catch (error) {
-            expect(error.code).to.equal(404);
-            expect(error.message.toString()).to.equal('User not found');
-        }
-    });
-    it('should find a user by the given id', async () => {
-        const { email } = gUser;
+        const [foundUser, foundUserErr] = await promisify(
+            findOne('id', user.id)
+        )
+        expect(foundUserErr).to.not.exist
+        expect(foundUser).to.haveOwnProperty('email')
+        expect(foundUser).to.not.haveOwnProperty('password')
+        expect(foundUser).to.not.haveOwnProperty('__v')
 
-        let user = null;
-        try {
-            user = await findOne('email', email);
-            console.log('email: ', email);
-        } catch (error) {
-            // console.log(error);
-            // expect(error).to.not.exist;
-        }
-
-        console.log('User: ', gUser);
-
-        expect(user).to.haveOwnProperty('email');
-        expect(user).to.not.haveOwnProperty('password');
-        expect(user).to.not.haveOwnProperty('__v');
-    });
-    // it('should return an array of user objects.', async () => {
-    //     const AMOUNT_OF_USERS = 2;
-    //     try {
-    //         const users = await findAll();
-    //         expect(users).to.have.lengthOf(AMOUNT_OF_USERS);
-    //         expect(users[0]).to.haveOwnProperty('email');
-    //         expect(users[0]).to.not.haveOwnProperty('password');
-    //         expect(users[0]).to.not.haveOwnProperty('__v');
-    //     } catch (error) {
-    //         console.log(error);
-    //     }
-    // });
-});
+        const [foundUser2, foundUser2Err] = await promisify(
+            findOne('email', user.email)
+        )
+        expect(foundUser2Err).to.not.exist
+        expect(foundUser2).to.haveOwnProperty('email')
+        expect(foundUser2).to.not.haveOwnProperty('password')
+        expect(foundUser2).to.not.haveOwnProperty('__v')
+    })
+})

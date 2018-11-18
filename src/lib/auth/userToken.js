@@ -1,15 +1,16 @@
-import jsonwebtoken from 'jsonwebtoken';
+import jsonwebtoken from 'jsonwebtoken'
 
 /**
  * @param {string} userId
+ *
  * @returns a JWT token from userId
  */
-export const sign = userId => {
+export function sign(userId) {
     if (!userId) {
-        throw new Error('A Users ID is required to sign a JWT token.');
+        throw new Error('A userId is required to sign a JWT token.')
     }
 
-    const timestamp = new Date().getTime();
+    const timestamp = new Date().getTime()
     return jsonwebtoken.sign(
         {
             sub: userId,
@@ -17,13 +18,23 @@ export const sign = userId => {
         },
         String(process.env.JWT_SECRET),
         {
-            expiresIn: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60 * 1000, // One week
+            expiresIn: 86400000, // One day
             issuer: String(process.env.JWT_ISSUER),
-        },
-    );
-};
+        }
+    )
+}
 
-export const verify = token =>
-    jsonwebtoken.verify(token, String(process.env.JWT_SECRET), {
+/**
+ * @param {string} token JWT token
+ *
+ * @returns {boolean} weather token is good or not
+ */
+export function verify(token) {
+    if (!token) {
+        throw new Error('Token must be supplied to be verified.')
+    }
+
+    return jsonwebtoken.verify(token, String(process.env.JWT_SECRET), {
         issuer: String(process.env.JWT_ISSUER),
-    });
+    })
+}

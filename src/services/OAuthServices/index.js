@@ -1,7 +1,7 @@
-import { Facebook } from './Facebook';
-import { Google } from './Google';
+import { Facebook } from './Facebook'
+import { Google } from './Google'
 
 export const AuthService = {
     Facebook,
     Google,
-};
+}

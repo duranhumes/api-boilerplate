@@ -1,19 +1,30 @@
 {
-    "name": "api-boilerplate",
+    "name": "recipick-api",
     "version": "1.0.0",
-    "description": "",
-    "main": "src/index.ts",
+    "description": "Recipick API",
+    "main": "src/index.js",
     "scripts": {
-        "test": "cross-env NODE_ENV=test mocha --require babel-core/register -r ./src/tests/setup.js \"./src/**/*.spec.js*\" --timeout 10000 --exit",
-        "dev": "cross-env NODE_ENV=development nodemon --exec babel-node src/index.js",
+        "test": "cross-env NODE_ENV=test npx mocha --require babel-core/register -r ./src/tests/setup.js \"./src/**/*.spec.js*\" --timeout 10000 --exit",
+        "dev": "cross-env NODE_ENV=development npx nodemon --exec babel-node src/index.js",
         "build": "cross-env npx babel src -d build",
         "start": "cross-env yarn build && cross-env NODE_ENV=production node build/index.js",
-        "docker-dev": "docker-compose up --remove-orphans",
-        "postinstall": "yarn clean && yarn prettier && yarn lint",
+        "docker": "docker-compose up --remove-orphans --build",
+        "postinstall": "yarn prettier && yarn lint",
         "prettier": "npx prettier --write '**/*.js'",
-        "clean": "node clean.js",
         "lint": "eslint --ignore-path .gitignore --ignore-pattern \"!**/.*\" .",
-        "lint-fix": "eslint --ignore-path .gitignore --ignore-pattern \"!**/.*\" --fix ."
+        "lint:fix": "eslint --ignore-path .gitignore --ignore-pattern \"!**/.*\" --fix ."
+    },
+    "husky": {
+        "hooks": {
+            "pre-commit": "lint-staged"
+        }
+    },
+    "lint-staged": {
+        "*.(js|jsx)": [
+            "yarn prettier",
+            "yarn lint:fix",
+            "git add"
+        ]
     },
     "dependencies": {
         "argon2": "^0.19.3",
@@ -29,7 +40,6 @@
         "dotenv": "^6.0.0",
         "escape-html": "^1.0.3",
         "express": "^4.16.3",
-        "express-request-id": "^1.4.1",
         "express-session": "^1.15.6",
         "express-validator": "^5.3.0",
         "faker": "^4.1.0",
@@ -46,16 +56,16 @@
     "devDependencies": {
         "babel-cli": "^6.26.0",
         "babel-core": "^6.26.3",
-        "babel-eslint": "^10.0.1",
         "babel-preset-env": "^1.7.0",
         "babel-preset-stage-2": "^6.24.1",
+        "babel-eslint": "^10.0.1",
         "cross-env": "5.2.0",
-        "del": "^3.0.0",
         "eslint": "^5.1.0",
         "eslint-config-prettier": "^3.1.0",
-        "eslint-plugin-react": "^7.11.1",
         "morgan": "^1.9.1",
         "nodemon": "^1.18.5",
+        "husky": "^1.1.2",
+        "lint-staged": "^7.3.0",
         "prettier": "^1.14.3"
     }
 }

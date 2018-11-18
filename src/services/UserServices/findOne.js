@@ -1,7 +1,7 @@
-import { User } from '../../models';
-import { filteredUser } from '../../models/User/helpers';
-import { logger } from '../../lib/services/logging';
-import { isEmpty } from '../../lib/helpers/isEmpty';
+import { User } from '../../models'
+import { filteredModel } from '../../models/helpers'
+import { logger } from '../../lib/utils/logging'
+import { isEmpty, promisify } from '../../lib/utils'
 
 /**
  * Find one user in mongodb by key
@@ -12,25 +12,26 @@ import { isEmpty } from '../../lib/helpers/isEmpty';
  */
 export default async function findOne(key, value, filter = true, fields = []) {
     if (!key || !value) {
-        throw new Error('You must provide both the field key and value');
+        throw new Error('You must provide both the field key and value')
     }
 
-    let user = null;
-    try {
-        user = await User.findOne({ [key]: value }).exec();
-    } catch (error) {
-        logger('Find user', error, 500);
+    const [user, userErr] = await promisify(
+        User.findOne({ [key]: value }).exec()
+    )
 
-        return Promise.reject({ code: 500, message: error });
+    if (userErr) {
+        logger('Find One User Service', userErr, 500)
+
+        return Promise.reject({ code: 500, message: userErr.message })
     }
 
     if (!user || isEmpty(user)) {
-        return Promise.reject({ code: 404, message: 'User not found' });
+        return Promise.reject({ code: 404, message: 'User not found' })
     }
 
     if (filter) {
-        user = filteredUser(user, fields);
+        return Promise.resolve(filteredModel(user, fields))
+    } else {
+        return Promise.resolve(user)
     }
-
-    return Promise.resolve(user);
 }

@@ -1,4 +1,5 @@
-import { logger } from '../../lib/services/logging';
+import { logger } from '../../lib/utils/logging'
+import { promisify } from '../../lib/utils'
 
 /**
  * Remove one user in mongodb by key
@@ -6,16 +7,15 @@ import { logger } from '../../lib/services/logging';
  */
 export default async function remove(user) {
     if (!user) {
-        throw new Error('A user must be provided.');
+        throw new Error('A user must be provided.')
     }
 
-    try {
-        await user.remove();
+    const [_, removeUserErr] = await promisify(user.remove()) // eslint-disable-line no-unused-vars
+    if (removeUserErr) {
+        logger('Remove User Service', removeUserErr, 500)
 
-        return Promise.resolve('User successfully deleted.');
-    } catch (error) {
-        logger('Remove User', error, 500);
-
-        return Promise.reject({ code: 500, message: error });
+        return Promise.reject({ code: 500, message: removeUserErr.message })
     }
+
+    return Promise.resolve('User deleted.')
 }

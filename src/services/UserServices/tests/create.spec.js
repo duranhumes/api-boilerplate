@@ -1,92 +1,75 @@
-import chai from 'chai';
-import chaiPromises from 'chai-as-promised';
-import faker from 'faker';
+import chai from 'chai'
+import chaiPromises from 'chai-as-promised'
+import faker from 'faker'
 
-import { create } from '../';
+import { create } from '../'
+import { promisify } from '../../../lib/utils'
 
-chai.use(chaiPromises);
-const expect = chai.expect;
+chai.use(chaiPromises)
+const expect = chai.expect
 
-const user = {
-    username: faker.internet.userName(),
-    firstName: faker.name.firstName(),
-    lastName: faker.name.lastName(),
-    email: faker.internet.email(),
-    password: faker.internet.password(),
-};
-
-const dupUser = {
-    username: faker.internet.userName(),
-    firstName: faker.name.firstName(),
-    lastName: faker.name.lastName(),
-    email: faker.internet.email(),
-    password: faker.internet.password(),
-};
-
-describe('Create user service', () => {
-    it('should handle case when user already exists', async () => {
-        await create(dupUser);
-
-        try {
-            await create(dupUser);
-            return Promise.resolve();
-        } catch (error) {
-            expect(JSON.stringify(error)).to.equal(
-                JSON.stringify({
-                    code: 409,
-                    message: 'User already exists',
-                }),
-            );
-        }
-    });
-
-    it('should create a new user and return mongoose model', async () => {
-        let newUser = null;
-        try {
-            newUser = await create(user, false);
-        } catch (error) {
-            console.log(error);
-            expect(error).to.not.exist;
+describe('=> Create user service <=', () => {
+    it('=> should handle case when user already exists', async () => {
+        const user = {
+            userName: faker.internet.userName(),
+            firstName: faker.name.firstName(),
+            lastName: faker.name.lastName(),
+            email: faker.internet.email(),
+            password: 'My_passwd@12',
         }
 
-        expect(newUser).to.have.property('username', user.username);
-        expect(newUser).to.have.property('firstName', user.firstName);
-        expect(newUser).to.have.property('lastName', user.lastName);
-        expect(newUser).to.have.property('email', user.email.toLowerCase());
-        expect(newUser).to.have.property('__v', 0);
-    });
+        const [newUser, newUserErr] = await promisify(create(user))
+        expect(newUser).to.exist
+        expect(newUserErr).to.not.exist
 
-    it('should throw error if anything but object is passed', async () => {
-        try {
-            await create('', false);
-        } catch (error) {
-            expect(error.toString()).to.equal(
-                'Error: User data must be provided.',
-            );
-        }
+        const [dupUser, dupUserErr] = await promisify(create(user))
+        const mongooseDuplicateErrorCode = 'E11000'
 
-        try {
-            await create([], false);
-        } catch (error) {
-            expect(error.toString()).to.equal(
-                'Error: User data must be provided.',
-            );
-        }
+        expect(dupUser).to.not.exist
+        expect(
+            String(dupUserErr.message).startsWith(mongooseDuplicateErrorCode)
+        ).to.be.true
+    })
 
-        try {
-            await create(102, false);
-        } catch (error) {
-            expect(error.toString()).to.equal(
-                'Error: User data must be provided.',
-            );
+    it('=> should create a new user and return mongoose model', async () => {
+        const user = {
+            userName: faker.internet.userName(),
+            firstName: faker.name.firstName(),
+            lastName: faker.name.lastName(),
+            email: faker.internet.email(),
+            password: 'My_passwd@12',
         }
+        const [newUser, newUserErr] = await promisify(create(user, false))
 
-        try {
-            await create({}, false);
-        } catch (error) {
-            expect(error.toString()).to.equal(
-                'Error: User data must be provided.',
-            );
-        }
-    });
-});
+        expect(newUserErr).to.not.exist
+        expect(newUser).to.have.property('userName', user.userName)
+        expect(newUser).to.have.property('firstName', user.firstName)
+        expect(newUser).to.have.property('lastName', user.lastName)
+        expect(newUser).to.have.property('email', user.email.toLowerCase())
+        expect(newUser).to.have.property('__v', 0)
+    })
+
+    it('=> should throw error if anything but object is passed', async () => {
+        /* eslint-disable no-unused-vars */
+        const [_, userErr1] = await promisify(create('', false))
+        expect(userErr1.toString()).to.equal(
+            'Error: User data must be provided.'
+        )
+
+        const [__, userErr2] = await promisify(create([], false))
+        expect(userErr2.toString()).to.equal(
+            'Error: User data must be provided.'
+        )
+
+        const [___, userErr3] = await promisify(create(102, false))
+        expect(userErr3.toString()).to.equal(
+            'Error: User data must be provided.'
+        )
+
+        const [____, userErr4] = await promisify(create({}, false))
+        expect(userErr4.toString()).to.equal(
+            'Error: User data must be provided.'
+        )
+        /* eslint-enable no-unused-vars */
+    })
+})

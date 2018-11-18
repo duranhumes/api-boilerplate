@@ -1,32 +1,37 @@
-import { Router } from 'express';
-import { validationResult } from 'express-validator/check';
+import { Router } from 'express'
 
-import Controller from '../Controller';
-import { sign } from '../../lib/auth/userToken';
-import * as httpMessages from '../../lib/helpers/httpMessages';
-import { logger } from '../../lib/services/logging';
-import { pick } from '../../lib/helpers/pick';
-import * as UserServices from '../../services/UserServices';
-import { AuthService } from '../../services/OAuthServices';
-import { verifyPassword } from '../../lib/auth/password';
-import { filteredUser } from '../../models/User/helpers';
-import validations from './validation';
+import Controller from '../Controller'
+import { pick, promisify } from '../../lib/utils'
+import { sign } from '../../lib/auth/userToken'
+import { logger } from '../../lib/utils/logging'
+import { verifyPassword } from '../../lib/auth/password'
+import { filteredModel } from '../../models/helpers'
+import * as UserServices from '../../services/UserServices'
+import { AuthService } from '../../services/OAuthServices'
+import * as httpMessages from '../../lib/utils/httpMessages'
+import { validationFunc, validationRules } from './validation'
 
 class LoginController extends Controller {
     constructor() {
-        super();
+        super()
 
-        this.router = Router();
-        this.routes();
+        this.router = Router()
+        this.routes()
     }
 
     routes() {
-        this.router.post('/', [...validations.basicLogin], this.basicLogin);
+        this.router.post(
+            '/',
+            [...validationRules.basicLogin],
+            validationFunc,
+            this.basicLogin
+        )
         this.router.post(
             '/oauth',
-            [...validations.oauthLogin],
-            this.oauthLogin,
-        );
+            [...validationRules.oauthLogin],
+            validationFunc,
+            this.oauthLogin
+        )
     }
 
     /**
@@ -36,60 +41,69 @@ class LoginController extends Controller {
      */
     basicLogin = async (req, res) => {
         /**
-         * Check if submitted values
-         * pass validation
-         */
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            console.log(errors.array());
-            res.status(422).json(httpMessages.code422);
-
-            return;
-        }
-
-        /**
          * Build request object
          */
-        const data = {};
+        const data = {}
         for (const key in req.body) {
-            if (req.body[key].trim() !== '') {
-                data[key] = this.escapeString(req.body[key]);
-            }
+            data[key] = this.escapeString(req.body[key]).trim()
         }
 
         /**
          * Dont allow other fields other
          * than the specified fields below
          */
-        const allowedFields = ['email', 'password'];
-        const { email, password } = pick(data, allowedFields);
+        const allowedFields = ['email', 'password']
+        const { email, password } = pick(data, allowedFields)
 
-        let user = null;
-        try {
-            user = await UserServices.findOne('email', email, false);
-        } catch (error) {
-            console.log(error);
-            const code = error.code || 500;
-            logger(req.ip, error, code);
+        /**
+         * Check if user exists, if not return 404
+         * otherwise proceed.
+         */
+        const [user, userErr] = await promisify(
+            UserServices.findOne('email', email, false)
+        )
+        if (userErr) {
+            if (userErr.code === 404) {
+                logger(req.ip, userErr, 404)
 
-            return res.status(code).json(httpMessages[`code${code}`]);
+                return res
+                    .status(404)
+                    .json(httpMessages.code404({}, userErr.message))
+            }
+
+            logger(req.ip, userErr, 500)
+
+            return res
+                .status(500)
+                .json(httpMessages.code500({}, userErr.message))
         }
 
-        let verified = false;
-        try {
-            verified = await verifyPassword(user.password, password);
-        } catch (error) {
-            console.log(error);
-            logger(req.ip, error, 500);
+        if (!user) {
+            return res.status(404).json(httpMessages.code404())
+        }
 
-            return res.status(500).json(httpMessages.code500);
+        /**
+         * Check if found users password matches the password
+         * supplied to this endpoint
+         */
+        const [verified, verifiedErr] = await promisify(
+            verifyPassword(user.password, password)
+        )
+        if (verifiedErr) {
+            logger(req.ip, verifiedErr, 500)
+
+            return res
+                .status(500)
+                .json(httpMessages.code500({}, verifiedErr.message))
         }
 
         if (!verified) {
-            return res.status(401).json(httpMessages.code401);
+            return res
+                .status(401)
+                .json(httpMessages.code401({}, 'Invalid credentials.'))
         }
 
-        user = filteredUser(user);
+        const filteredUserObj = filteredModel(user)
 
         /**
          * Login user, send user info back
@@ -97,30 +111,28 @@ class LoginController extends Controller {
          * verify who the user is in
          * subsequent requests
          */
-        req.login(user.id, err => {
+        req.login(filteredUserObj.id, function(err) {
             if (err) {
-                console.log(err);
-                logger(req.ip, err, 500);
+                logger(req.ip, err, 500)
 
-                return res.status(500).json(httpMessages.code500);
+                return res
+                    .status(500)
+                    .json(httpMessages.code500({}, err.message))
             }
 
             // Generate JWT Token with user id
-            const token = sign(user.id);
+            const authToken = sign(user.id)
 
             // Return user obj with new JWT token
             const response = {
-                ...user,
-                token,
-            };
+                ...filteredUserObj,
+                authToken,
+            }
 
-            res.set('authorization', token);
-            return res.status(200).json({
-                response,
-                message: 'Success',
-            });
-        });
-    };
+            res.set('authorization', authToken)
+            return res.status(200).json(httpMessages.code200(response))
+        })
+    }
 
     /**
      * Login a user with oauth provider
@@ -129,25 +141,11 @@ class LoginController extends Controller {
      */
     oauthLogin = async (req, res) => {
         /**
-         * Check if submitted values
-         * pass validation
-         */
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            console.log(errors.array());
-            res.status(422).json(httpMessages.code422);
-
-            return;
-        }
-
-        /**
          * Build request object
          */
-        const data = {};
+        const data = {}
         for (const key in req.body) {
-            if (req.body[key].trim() !== '') {
-                data[key] = this.escapeString(req.body[key]);
-            }
+            data[key] = this.escapeString(req.body[key]).trim()
         }
 
         /**
@@ -155,7 +153,7 @@ class LoginController extends Controller {
          */
         const userOAuthData = {
             email: null,
-            username: null,
+            userName: null,
             firstName: null,
             lastName: null,
             profilePhoto: null,
@@ -163,57 +161,41 @@ class LoginController extends Controller {
                 id: null,
                 type: null,
             },
-        };
+        }
         if (data.provider && data.oauthToken) {
-            if (data.provider === 'FACEBOOK') {
-                let facebook = null;
+            if (data.provider === 'GOOGLE') {
+                let google = null
                 try {
-                    facebook = await AuthService.Facebook.authAsync(
-                        data.oauthToken,
-                    );
+                    google = await AuthService.Google.authAsync(data.oauthToken)
                 } catch (error) {
-                    logger(req.ip, error, 500);
+                    logger(req.ip, error, 500)
 
-                    return res.status(500).json(httpMessages.code500);
+                    return res
+                        .status(500)
+                        .json(httpMessages.code500({}, error.message))
                 }
 
-                const [firstName, ...lastName] = facebook.name.split(' ');
-                userOAuthData.email = facebook.email;
-                userOAuthData.username = facebook.name;
-                userOAuthData.firstName = firstName;
-                userOAuthData.lastName = lastName.join(' ');
-                userOAuthData.profilePhoto = facebook.picture.data.url;
-                userOAuthData.oauthProviders.id = facebook.id;
-                userOAuthData.oauthProviders.type = 'FACEBOOK';
-            } else if (data.provider === 'GOOGLE') {
-                let google = null;
-                try {
-                    google = await AuthService.Google.authAsync(
-                        data.oauthToken,
-                    );
-                } catch (error) {
-                    logger(req.ip, error, 500);
-
-                    return res.status(500).json(httpMessages.code500);
-                }
-
-                userOAuthData.email = google.email;
-                userOAuthData.username = `${google.given_name} ${
+                userOAuthData.email = google.email
+                userOAuthData.userName = `${google.given_name} ${
                     google.family_name
-                }`;
-                userOAuthData.firstName = google.given_name;
-                userOAuthData.lastName = google.family_name;
-                userOAuthData.profilePhoto = google.picture;
-                userOAuthData.oauthProviders.id = google.id;
-                userOAuthData.oauthProviders.type = 'GOOGLE';
+                }`
+                userOAuthData.firstName = google.given_name
+                userOAuthData.lastName = google.family_name
+                userOAuthData.profilePhoto = google.picture
+                userOAuthData.oauthProviders.id = google.id
+                userOAuthData.oauthProviders.type = 'GOOGLE'
             } else {
-                return res.status(422).json({
-                    response: {},
-                    message: 'OAuth provider not recognized.',
-                });
+                return res
+                    .status(422)
+                    .json(
+                        httpMessages.code422(
+                            {},
+                            'OAuth provider not recognized.'
+                        )
+                    )
             }
         } else {
-            return res.status(422).json(httpMessages.code422);
+            return res.status(422).json(httpMessages.code422())
         }
 
         /**
@@ -221,14 +203,14 @@ class LoginController extends Controller {
          * if found contine otherwise if code = 404
          * create a new user and return it.
          */
-        let code = null;
-        let user = null;
+        let code = null
+        let user = null
         try {
             user = await UserServices.findOne(
                 'email',
                 userOAuthData.email,
-                false,
-            );
+                false
+            )
             /**
              * If user is found update oauthProviders field
              */
@@ -240,36 +222,37 @@ class LoginController extends Controller {
                  * and update user.
                  */
                 if (user.oauthProviders.length > 0) {
-                    let newOAuthData = user.oauthProviders;
+                    let newOAuthData = user.oauthProviders
                     newOAuthData = newOAuthData.map(
                         provider =>
-                            provider.id !== userOAuthData.oauthProviders.id,
-                    );
+                            provider.id !== userOAuthData.oauthProviders.id
+                    )
 
                     // Map would return false if nothing new is there
                     if (newOAuthData[0]) {
                         user.oauthProviders = [
                             ...user.oauthProviders,
                             ...newOAuthData,
-                        ];
+                        ]
                     }
                 } else {
                     user.oauthProviders = [
                         ...user.oauthProviders,
                         userOAuthData.oauthProviders,
-                    ];
+                    ]
                 }
 
-                user = await UserServices.save(user);
+                user = await UserServices.update(user)
             }
         } catch (error) {
-            console.log(error);
             if (error.code !== 404) {
-                logger(req.ip, error, 500);
+                logger(req.ip, error, 500)
 
-                return res.status(500).json(httpMessages.code500);
+                return res
+                    .status(500)
+                    .json(httpMessages.code500({}, error.message))
             } else {
-                code = 404;
+                code = 404
             }
         } finally {
             if (code === 404) {
@@ -277,12 +260,13 @@ class LoginController extends Controller {
                     user = await UserServices.create({
                         ...userOAuthData,
                         password: String(process.env.DEFAULT_OAUTH_PASSWORD),
-                    });
+                    })
                 } catch (error) {
-                    console.log(error);
-                    logger(req.ip, error, 500);
+                    logger(req.ip, error, 500)
 
-                    res.status(500).json(httpMessages.code500);
+                    res.status(500).json(
+                        httpMessages.code500({}, error.message)
+                    )
                 }
             }
         }
@@ -295,31 +279,26 @@ class LoginController extends Controller {
          */
         req.login(user.id, err => {
             if (err) {
-                console.log(err);
-                logger(req.ip, err, 500);
+                logger(req.ip, err, 500)
 
-                return res.status(500).json(httpMessages.code500);
+                return res
+                    .status(500)
+                    .json(httpMessages.code500({}, err.message))
             }
 
             // Generate JWT Token with user id
-            const token = sign(user.id);
+            const authToken = sign(user.id)
 
             // Return user obj with new JWT token
             const response = {
                 ...user,
-                token,
-            };
+                authToken,
+            }
 
-            res.set('authorization', token);
-            return res.status(200).json({
-                response,
-                message: 'Success',
-            });
-        });
-    };
+            res.set('authorization', authToken)
+            return res.status(200).json(httpMessages.code200(response))
+        })
+    }
 }
 
-const loginController = new LoginController();
-const controller = loginController.router;
-
-export default controller;
+export default new LoginController().router

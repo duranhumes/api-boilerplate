@@ -1,7 +1,7 @@
-import { User } from '../../models';
-import { filteredUser } from '../../models/User/helpers';
-import { logger } from '../../lib/services/logging';
-import { isEmpty } from '../../lib/helpers/isEmpty';
+import { User } from '../../models'
+import { filteredModel } from '../../models/helpers'
+import { logger } from '../../lib/utils/logging'
+import { isEmpty, promisify } from '../../lib/utils'
 
 /**
  * Create a new mongodb record.
@@ -11,28 +11,19 @@ import { isEmpty } from '../../lib/helpers/isEmpty';
  */
 export default async function create(user, filter = true, fields = []) {
     if (!user || isEmpty(user)) {
-        throw new Error('User data must be provided.');
+        throw new Error('User data must be provided.')
     }
 
-    let newUser = null;
-    try {
-        newUser = await User.create(user);
-    } catch (error) {
-        if (Number(error.code) === 11000) {
-            return Promise.reject({
-                code: 409,
-                message: 'User already exists',
-            });
-        } else {
-            logger('Create User', error, 500);
+    const [newUser, newUserErr] = await promisify(User.create(user))
+    if (newUserErr) {
+        logger('Create User Service', newUserErr, 500)
 
-            return Promise.reject({ code: 500, message: error });
-        }
+        return Promise.reject({ code: 500, message: newUserErr.message })
     }
 
     if (filter) {
-        newUser = filteredUser(newUser, fields);
+        return Promise.resolve(filteredModel(newUser, fields))
+    } else {
+        return Promise.resolve(newUser)
     }
-
-    return Promise.resolve(newUser);
 }

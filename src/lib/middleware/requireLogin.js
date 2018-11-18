@@ -1,4 +1,4 @@
-import passport from 'passport';
-import '../services/passport';
+import passport from 'passport'
+import './passport'
 
-export default passport.authenticate('jwt', { session: false });
+export default passport.authenticate('jwt', { session: false })
