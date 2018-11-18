@@ -3,6 +3,8 @@ import uuid from 'uuid/v4'
 
 import { hashPassword } from '../../lib/auth/password.js'
 
+const OAUTH_PROVIDERS = ['GOOGLE', 'FACEBOOK']
+
 const Schema = mongoose.Schema
 const UserSchema = new Schema(
     {
@@ -58,6 +60,19 @@ const UserSchema = new Schema(
             type: String,
             default: null,
         },
+        oauthProviders: [
+            {
+                id: {
+                    type: String,
+                    required: true,
+                },
+                type: {
+                    type: String,
+                    required: true,
+                    enum: OAUTH_PROVIDERS,
+                },
+            },
+        ],
     },
     { timestamps: true }
 )
