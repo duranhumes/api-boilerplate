@@ -164,15 +164,15 @@ class LoginController extends Controller {
         }
         if (data.provider && data.oauthToken) {
             if (data.provider === 'GOOGLE') {
-                let google = null
-                try {
-                    google = await AuthService.Google.authAsync(data.oauthToken)
-                } catch (error) {
-                    logger(req.ip, error, 500)
+                const [google, googleErr] = await promisify(
+                    AuthService.Google.authAsync(data.oauthToken)
+                )
+                if (googleErr) {
+                    logger(req.ip, googleErr, 500)
 
                     return res
                         .status(500)
-                        .json(httpMessages.code500({}, error.message))
+                        .json(httpMessages.code500({}, googleErr.message))
                 }
 
                 userOAuthData.email = google.email
@@ -184,6 +184,26 @@ class LoginController extends Controller {
                 userOAuthData.profilePhoto = google.picture
                 userOAuthData.oauthProviders.id = google.id
                 userOAuthData.oauthProviders.type = 'GOOGLE'
+            } else if (data.provider === 'FACEBOOK') {
+                const [facebook, facebookErr] = await promisify(
+                    AuthService.Facebook.authAsync(data.oauthToken)
+                )
+                if (facebookErr) {
+                    logger(req.ip, facebookErr, 500)
+
+                    return res
+                        .status(500)
+                        .json(httpMessages.code500({}, facebookErr.message))
+                }
+
+                const [firstName, ...lastName] = facebook.name.split(' ')
+                userOAuthData.email = facebook.email
+                userOAuthData.username = facebook.name
+                userOAuthData.firstName = firstName
+                userOAuthData.lastName = lastName.join(' ')
+                userOAuthData.profilePhoto = facebook.picture.data.url
+                userOAuthData.oauthProviders.id = facebook.id
+                userOAuthData.oauthProviders.type = 'FACEBOOK'
             } else {
                 return res
                     .status(422)
