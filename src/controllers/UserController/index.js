@@ -61,12 +61,9 @@ class UserController extends Controller {
      * @field {number} amount of users to create
      */
     seeder = async (req, res) => {
-        let amountOfUsers = 10
-        if (req.query.amount) {
-            amountOfUsers = req.query.amount
-        }
+        const amountOfUsers = this.escapeString(req.query.amount)
 
-        await seedUsers(amountOfUsers)
+        await seedUsers(Number(amountOfUsers))
 
         const [users, usersErr] = await promisify(UserServices.findAll())
         if (usersErr) {
@@ -75,14 +72,14 @@ class UserController extends Controller {
                 .json(httpMessages.code500({}, usersErr.message))
         }
 
-        const existingUsersCount = users.length
-
         return res
             .status(200)
             .json(
                 httpMessages.code200(
                     {},
-                    `${amountOfUsers} users created. There are ${existingUsersCount} users now in DB.`
+                    `${amountOfUsers} users created. There are ${
+                        users.length
+                    } users now in DB.`
                 )
             )
     }
