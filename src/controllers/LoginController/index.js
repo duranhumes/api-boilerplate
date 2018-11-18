@@ -198,7 +198,7 @@ class LoginController extends Controller {
 
                 const [firstName, ...lastName] = facebook.name.split(' ')
                 userOAuthData.email = facebook.email
-                userOAuthData.username = facebook.name
+                userOAuthData.userName = facebook.name
                 userOAuthData.firstName = firstName
                 userOAuthData.lastName = lastName.join(' ')
                 userOAuthData.profilePhoto = facebook.picture.data.url
