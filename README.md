@@ -32,7 +32,9 @@ DEFAULT_OAUTH_PASSWORD=<DEFAULT_OAUTH_PASSWORD || password123>
 ## Current endpoints
 
 ### /v1/user
+
 * `GET /v1/user` -> Returns all users in DB
+
 * `POST /v1/user` -> Creates a new user from data in the request body
 ```
 {
@@ -43,12 +45,17 @@ DEFAULT_OAUTH_PASSWORD=<DEFAULT_OAUTH_PASSWORD || password123>
 ```
 
 * `GET /v1/user/:id` -> Returns a user found by id provided
+
 * `PATCH /v1/user/:id` -> Updates a user found by id provided
+
 * `DELETE /v1/user/:id` -> Deletes a user found by id provided
+
 * `GET /v1/user/me` -> Returns the currently logged in user data based on the `authorization` header provided in the request headers
+
 * `POST /v1/user/seed?amount=20` -> Seeds the DB with the amount of users provided in the request query
 
 ### /v1/login
+
 * `POST /v1/login` -> Login user with email & password provided in the request body
 ```
 {
@@ -57,7 +64,7 @@ DEFAULT_OAUTH_PASSWORD=<DEFAULT_OAUTH_PASSWORD || password123>
 }
 ```
 
-* `POST /v1/oauth` -> Login user with OAuth provider & oauth access token from request body
+* `POST /v1/login/oauth` -> Login user with OAuth provider & oauth access token from request body
 ```
 {
     "provider": "GOOGLE",
@@ -66,6 +73,7 @@ DEFAULT_OAUTH_PASSWORD=<DEFAULT_OAUTH_PASSWORD || password123>
 ```
 
 ### /v1/logout
+
 * `POST /v1/logout` -> Removes req.user from server
 
 ## Running the tests
