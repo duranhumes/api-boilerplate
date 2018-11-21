@@ -68,7 +68,6 @@ export const validationRules = {
 export function validationFunc(req, res, next) {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        console.log(errors.array())
         const errString = errors
             .array()
             .map(({ param, msg }) => `${param}: ${msg}`)

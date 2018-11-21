@@ -72,10 +72,10 @@ class Server {
             )
         )
         /* eslint-enable no-unused-vars */
-        if (!err) {
-            console.log(`Mongoose successfully connected at ${uri}`)
+        if (err) {
+            console.log(`Error in mongodb connection: ${err}`)
         } else {
-            console.log('Error in mongodb connection: ', err)
+            console.log(`Mongoose successfully connected at: ${uri}`)
         }
 
         process.on('SIGINT', () => {
@@ -90,27 +90,6 @@ class Server {
 
         this.app.use('/v1', router)
 
-        router.all('*', (req, res, next) => {
-            logger(req.ip, req.statusMessage, req.statusCode)
-
-            // Only allow JSON requests to server
-            // to keep consistent
-            const contentType = req.headers['content-type']
-            if (req.method !== 'GET') {
-                if (!contentType || !contentType.includes('application/json')) {
-                    res.status(400).json({
-                        response: {},
-                        message:
-                            "This API only accepts 'application/json' content type for everything except GET requests.",
-                    })
-
-                    return
-                }
-            }
-
-            next()
-        })
-
         passportConfig()
         router.use('/login', LoginController)
         router.use('/logout', LogoutController)
@@ -122,17 +101,26 @@ class Server {
             router.get(url, (_, res) => res.sendStatus(204))
         })
 
-        // Catch stragling errors
+        // Catch straggling errors
         this.app.use((err, req, res, next) => {
             console.log('Error In Server: ', err)
             logger(req.ip, req.statusMessage, req.statusCode)
 
-            res.status(500).json({
+            if (err && err.message) {
+                res.status(500).json({
+                    response: {},
+                    message: err.message,
+                })
+
+                return next()
+            }
+
+            res.status(404).json({
                 response: {},
-                message: 'Something went wrong please try again.',
+                message: 'Not found.',
             })
 
-            next()
+            return next()
         })
     }
 }

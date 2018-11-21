@@ -1,7 +1,7 @@
 {
-    "name": "recipick-api",
+    "name": "api-boilerplate",
     "version": "1.0.0",
-    "description": "Recipick API",
+    "description": "API Boilerplate",
     "main": "src/index.js",
     "scripts": {
         "test": "cross-env NODE_ENV=test npx mocha --require babel-core/register -r ./src/tests/setup.js \"./src/**/*.spec.js*\" --timeout 10000 --exit",
