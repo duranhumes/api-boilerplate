@@ -31,11 +31,11 @@ DEFAULT_OAUTH_PASSWORD=<DEFAULT_OAUTH_PASSWORD || password123>
 
 ## Current endpoints
 
-### /v1/user
+### /v1/users
 
-* `GET /v1/user` -> Returns all users in DB
+* `GET /v1/users` -> Returns all users in DB
 
-* `POST /v1/user` -> Creates a new user from data in the request body
+* `POST /v1/users` -> Creates a new user from data in the request body
 ```
 {
     "userName": "myusername",
@@ -44,15 +44,15 @@ DEFAULT_OAUTH_PASSWORD=<DEFAULT_OAUTH_PASSWORD || password123>
 }
 ```
 
-* `GET /v1/user/:id` -> Returns a user found by id provided
+* `GET /v1/users/:id` -> Returns a user found by id provided
 
-* `PATCH /v1/user/:id` -> Updates a user found by id provided
+* `PATCH /v1/users/:id` -> Updates a user found by id provided
 
-* `DELETE /v1/user/:id` -> Deletes a user found by id provided
+* `DELETE /v1/users/:id` -> Deletes a user found by id provided
 
-* `GET /v1/user/me` -> Returns the currently logged in user data based on the `authorization` header provided in the request headers
+* `GET /v1/users/me` -> Returns the currently logged in user data based on the `authorization` header provided in the request headers
 
-* `POST /v1/user/seed?amount=20` -> Seeds the DB with the amount of users provided in the request query
+* `POST /v1/users/seed?amount=20` -> Seeds the DB with the amount of users provided in the request query
 
 ### /v1/login
 
