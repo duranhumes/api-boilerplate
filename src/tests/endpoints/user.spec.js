@@ -21,7 +21,7 @@ describe('=> API User Endpoint <=', () => {
                 password: 'My_passwd@12',
             }
             const response = await request(server)
-                .post('/v1/user')
+                .post('/v1/users')
                 .set('Content-Type', 'application/json')
                 .send(userObj)
 
@@ -29,7 +29,7 @@ describe('=> API User Endpoint <=', () => {
         })
         it('=> should return the current authenticated user data', async () => {
             const response = await request(server)
-                .get('/v1/user/me')
+                .get('/v1/users/me')
                 .set('Content-Type', 'application/json')
                 .set('authorization', authToken)
 
@@ -40,7 +40,7 @@ describe('=> API User Endpoint <=', () => {
         })
         it('=> should return 401 if not authenticated', async () => {
             const response = await request(server)
-                .get('/v1/user/me')
+                .get('/v1/users/me')
                 .set('Content-Type', 'application/json')
 
             expect(response.statusCode).to.equal(401)
@@ -57,7 +57,7 @@ describe('=> API User Endpoint <=', () => {
             }
 
             const response = await request(server)
-                .post('/v1/user')
+                .post('/v1/users')
                 .set('Content-Type', 'application/json')
                 .send(newUserObj)
 
@@ -77,7 +77,7 @@ describe('=> API User Endpoint <=', () => {
             }
 
             const response = await request(server)
-                .post('/v1/user')
+                .post('/v1/users')
                 .set('Content-Type', 'application/json')
                 .send(newUserObj)
 
@@ -94,7 +94,7 @@ describe('=> API User Endpoint <=', () => {
             }
             // Check password requirements validation
             const response = await request(server)
-                .post('/v1/user')
+                .post('/v1/users')
                 .set('Content-Type', 'application/json')
                 .send({ ...userObj, password: 'password' })
 
@@ -102,7 +102,7 @@ describe('=> API User Endpoint <=', () => {
 
             delete userObj.userName
             const respons2 = await request(server)
-                .post('/v1/user')
+                .post('/v1/users')
                 .set('Content-Type', 'application/json')
                 .send(userObj)
 
@@ -121,7 +121,7 @@ describe('=> API User Endpoint <=', () => {
                 password: 'My_passwd@12',
             }
             const response = await request(server)
-                .post('/v1/user')
+                .post('/v1/users')
                 .set('Content-Type', 'application/json')
                 .send(userObj)
 
@@ -129,7 +129,7 @@ describe('=> API User Endpoint <=', () => {
         })
         it('=> should return a user found by ID', async () => {
             const response = await request(server)
-                .get(`/v1/user/${userId}`)
+                .get(`/v1/users/${userId}`)
                 .set('Content-Type', 'application/json')
 
             expect(response.body.response).to.haveOwnProperty('id')
@@ -139,7 +139,7 @@ describe('=> API User Endpoint <=', () => {
         })
         it('=> should return 404 if not found', async () => {
             const response = await request(server)
-                .get('/v1/user/some-id-that-doesnt-exist')
+                .get('/v1/users/some-id-that-doesnt-exist')
                 .set('Content-Type', 'application/json')
 
             expect(response.statusCode).to.equal(404)
@@ -158,14 +158,14 @@ describe('=> API User Endpoint <=', () => {
         })
         it('=> should return an empty array if there are no users', async () => {
             const response = await request(server)
-                .get('/v1/user')
+                .get('/v1/users')
                 .set('Content-Type', 'application/json')
 
             expect(response.body.response).to.eql([])
         })
         it('=> should return an array of users', async () => {
             await request(server)
-                .post('/v1/user')
+                .post('/v1/users')
                 .set('Content-Type', 'application/json')
                 .send(userObj)
 
@@ -175,12 +175,12 @@ describe('=> API User Endpoint <=', () => {
                 email: '2' + userObj.email,
             }
             await request(server)
-                .post('/v1/user')
+                .post('/v1/users')
                 .set('Content-Type', 'application/json')
                 .send(newUserObj)
 
             const response = await request(server)
-                .get('/v1/user')
+                .get('/v1/users')
                 .set('Content-Type', 'application/json')
 
             expect(response.body.response[0]).to.haveOwnProperty('id')
@@ -203,7 +203,7 @@ describe('=> API User Endpoint <=', () => {
                 password: 'My_passwd@12',
             }
             const response = await request(server)
-                .post('/v1/user')
+                .post('/v1/users')
                 .set('Content-Type', 'application/json')
                 .send(userObj)
 
@@ -220,7 +220,7 @@ describe('=> API User Endpoint <=', () => {
             userObj.userName = newUserName
 
             const response = await request(server)
-                .patch(`/v1/user/${userId}`)
+                .patch(`/v1/users/${userId}`)
                 .set('Content-Type', 'application/json')
                 .set('authorization', authToken)
                 .send(userObj)
@@ -240,7 +240,7 @@ describe('=> API User Endpoint <=', () => {
         })
         it('should return 403 if authenticated user id and request id dont match', async () => {
             const response = await request(server)
-                .patch(`/v1/user/${userId}20`)
+                .patch(`/v1/users/${userId}20`)
                 .set('Content-Type', 'application/json')
                 .set('authorization', authToken)
                 .send(userObj)
@@ -261,7 +261,7 @@ describe('=> API User Endpoint <=', () => {
                 password: 'My_passwd@12',
             }
             const response = await request(server)
-                .post('/v1/user')
+                .post('/v1/users')
                 .set('Content-Type', 'application/json')
                 .send(userObj)
 
@@ -270,12 +270,12 @@ describe('=> API User Endpoint <=', () => {
         })
         it('=> should delete user found by the given id', async () => {
             await request(server)
-                .delete(`/v1/user/${userId}`)
+                .delete(`/v1/users/${userId}`)
                 .set('Content-Type', 'application/json')
                 .set('authorization', authToken)
 
             const response = await request(server)
-                .get(`/v1/user/${userId}`)
+                .get(`/v1/users/${userId}`)
                 .set('Content-Type', 'application/json')
 
             expect(response.body.response).to.eql({})
@@ -283,7 +283,7 @@ describe('=> API User Endpoint <=', () => {
         })
         it('should return 403 if authenticated user id and request id dont match', async () => {
             const response = await request(server)
-                .delete(`/v1/user/${userId}20`)
+                .delete(`/v1/users/${userId}20`)
                 .set('Content-Type', 'application/json')
                 .set('authorization', authToken)
                 .send(userObj)
