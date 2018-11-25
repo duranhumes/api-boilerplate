@@ -90,22 +90,47 @@ class Server {
 
         this.app.use('/v1', router)
 
+        // Only allow JSON requests to server
+        router.use((req, res, next) => {
+            const contentType = req.headers['content-type']
+            if (req.method !== 'GET') {
+                const allowedContentTypes = [
+                    'application/json',
+                    'multipart/form-data',
+                    'application/x-www-form-urlencoded',
+                ]
+                const contentTypeMatches = allowedContentTypes.filter(s =>
+                    s.includes(contentType)
+                )
+                if (!contentType || contentTypeMatches.length === 0) {
+                    logger(req.ip, req.statusMessage, req.statusCode)
+
+                    return res.status(400).json({
+                        response: {},
+                        message: `This API only accepts ${allowedContentTypes.join(
+                            ', '
+                        )} content types for everything except GET requests.`,
+                    })
+                }
+            }
+
+            return next()
+        })
+
         passportConfig()
         router.use('/login', LoginController)
         router.use('/logout', LogoutController)
-        router.use('/user', UserController)
+        router.use('/users', UserController)
 
-        // To prevent 404 if specific files are requested that don't exist
+        // To prevent 404 if using the API in browser
         const noContentUrls = ['/favicon.ico', '/robots.txt']
         noContentUrls.forEach(url => {
             router.get(url, (_, res) => res.sendStatus(204))
         })
 
         // Catch straggling errors
-        this.app.use((err, req, res, next) => {
-            console.log('Error In Server: ', err)
+        router.use((err, req, res, next) => {
             logger(req.ip, req.statusMessage, req.statusCode)
-
             if (err && err.message) {
                 res.status(500).json({
                     response: {},
