@@ -19,9 +19,6 @@ class LogoutController extends Controller {
         req.user = null
         delete req.user
 
-        res.user = null
-        delete res.user
-
         return res.sendStatus(200)
     }
 }

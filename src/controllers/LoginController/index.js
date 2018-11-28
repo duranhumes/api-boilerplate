@@ -36,6 +36,7 @@ class LoginController extends Controller {
 
     /**
      * Login a user with required fields
+     *
      * @field email
      * @field password
      */
@@ -103,14 +104,13 @@ class LoginController extends Controller {
                 .json(httpMessages.code401({}, 'Invalid credentials.'))
         }
 
-        const filteredUserObj = filteredModel(user)
-
         /**
          * Login user, send user info back
          * along with jsonwebtoken as a way to
          * verify who the user is in
          * subsequent requests
          */
+        const filteredUserObj = filteredModel(user)
         req.login(filteredUserObj.id, function(err) {
             if (err) {
                 logger(req.ip, err, 500)
@@ -130,6 +130,7 @@ class LoginController extends Controller {
             }
 
             res.set('authorization', authToken)
+
             return res.status(200).json(httpMessages.code200(response))
         })
     }
@@ -163,28 +164,7 @@ class LoginController extends Controller {
             },
         }
         if (data.provider && data.oauthToken) {
-            if (data.provider === 'GOOGLE') {
-                const [google, googleErr] = await promisify(
-                    AuthService.Google.authAsync(data.oauthToken)
-                )
-                if (googleErr) {
-                    logger(req.ip, googleErr, 500)
-
-                    return res
-                        .status(500)
-                        .json(httpMessages.code500({}, googleErr.message))
-                }
-
-                userOAuthData.email = google.email
-                userOAuthData.userName = `${google.given_name} ${
-                    google.family_name
-                }`
-                userOAuthData.firstName = google.given_name
-                userOAuthData.lastName = google.family_name
-                userOAuthData.profilePhoto = google.picture
-                userOAuthData.oauthProviders.id = google.id
-                userOAuthData.oauthProviders.type = 'GOOGLE'
-            } else if (data.provider === 'FACEBOOK') {
+            if (data.provider === 'FACEBOOK') {
                 const [facebook, facebookErr] = await promisify(
                     AuthService.Facebook.authAsync(data.oauthToken)
                 )
@@ -198,10 +178,8 @@ class LoginController extends Controller {
 
                 const [firstName, ...lastName] = facebook.name.split(' ')
                 userOAuthData.email = facebook.email
-                userOAuthData.userName = facebook.name
                 userOAuthData.firstName = firstName
                 userOAuthData.lastName = lastName.join(' ')
-                userOAuthData.profilePhoto = facebook.picture.data.url
                 userOAuthData.oauthProviders.id = facebook.id
                 userOAuthData.oauthProviders.type = 'FACEBOOK'
             } else {
@@ -316,6 +294,7 @@ class LoginController extends Controller {
             }
 
             res.set('authorization', authToken)
+
             return res.status(200).json(httpMessages.code200(response))
         })
     }

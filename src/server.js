@@ -90,7 +90,7 @@ class Server {
 
         this.app.use('/v1', router)
 
-        // Only allow JSON requests to server
+        // Only allow JSON / Form requests to server
         router.use((req, res, next) => {
             const contentType = req.headers['content-type']
             if (req.method !== 'GET') {

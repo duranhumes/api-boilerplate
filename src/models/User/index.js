@@ -3,7 +3,7 @@ import uuid from 'uuid/v4'
 
 import { hashPassword } from '../../lib/auth/password.js'
 
-const OAUTH_PROVIDERS = ['GOOGLE', 'FACEBOOK']
+export const OAUTH_PROVIDERS = ['FACEBOOK']
 
 const Schema = mongoose.Schema
 const UserSchema = new Schema(
@@ -36,8 +36,8 @@ const UserSchema = new Schema(
         password: {
             type: String,
             required: true,
-            min: [8, 'Your password must be atleast 8 characters'],
-            max: 15,
+            min: [8, 'Your password must be atleast 8 characters long'],
+            max: [15, 'Your password must be less than 15 characters long'],
             validate: {
                 validator: function(password) {
                     const passwordRegex = new RegExp(
@@ -86,8 +86,9 @@ UserSchema.pre('save', async function(next) {
     }
 
     this.email = this.email.toLowerCase()
+    this.id = this._id
 
     next()
 })
 
-export default mongoose.model('user', UserSchema)
+export const model = mongoose.model('user', UserSchema)

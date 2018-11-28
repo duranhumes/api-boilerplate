@@ -9,7 +9,7 @@ chai.use(chaiPromises)
 const expect = chai.expect
 
 describe('=> Update user service <=', () => {
-    it('=> should update user to db', async () => {
+    it('=> should update user in db', async () => {
         const [user, userErr] = await promisify(
             create(
                 {

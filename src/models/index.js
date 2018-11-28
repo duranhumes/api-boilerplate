@@ -1,1 +1,1 @@
-export { default as User } from './User'
+export { model as User } from './User'

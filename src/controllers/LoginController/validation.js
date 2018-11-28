@@ -1,19 +1,22 @@
 import { body, validationResult } from 'express-validator/check'
+
 import { code422 } from '../../lib/utils/httpMessages'
+import { OAUTH_PROVIDERS } from '../../models/User'
 
 export const validationRules = {
     basicLogin: [
         body('email')
             .not()
             .isEmpty()
+            .withMessage('is required')
             .trim()
             .isEmail()
-            .withMessage('Is not a valid email address')
+            .withMessage('is not a valid email address')
             .escape(),
         body('password')
             .not()
             .isEmpty()
-            .withMessage('Is required')
+            .withMessage('is required')
             .trim()
             .escape(),
     ],
@@ -21,14 +24,13 @@ export const validationRules = {
         body('provider')
             .not()
             .isEmpty()
-            .withMessage('OAuth provider is required.')
-            .isIn(['GOOGLE'])
-            .withMessage('Google is a valid oauth provider')
+            .withMessage('is required.')
+            .isIn([...OAUTH_PROVIDERS])
             .escape(),
         body('oauthToken')
             .not()
             .isEmpty()
-            .withMessage('OAuth token is required.')
+            .withMessage('is required.')
             .escape(),
     ],
 }

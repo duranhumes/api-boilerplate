@@ -23,7 +23,6 @@ export const jwtLogin = new Strategy(jwtOptions, async (req, payload, done) => {
     }
 
     const [user, userErr] = await promisify(UserServices.findOne('id', id))
-
     if (userErr) {
         logger('Error In Passport JWT Login', userErr, 500)
 
@@ -51,7 +50,6 @@ export const passportConfig = () => {
 
     passport.deserializeUser(async (id, done) => {
         const [user, userErr] = await promisify(UserServices.findOne('id', id))
-
         if (userErr) {
             logger('Error In Passport Deserialize', userErr, 500)
 

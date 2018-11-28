@@ -12,7 +12,7 @@ const userShape = () => ({
         ? [
               {
                   id: faker.random.uuid(),
-                  type: 'GOOGLE',
+                  type: 'FACEBOOK',
               },
           ]
         : [],

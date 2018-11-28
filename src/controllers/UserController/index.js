@@ -130,9 +130,9 @@ class UserController extends Controller {
 
     /**
      * Creates a user with required fields
+     *
      * @field firstName
      * @field lastName
-     * @field username
      * @field email
      * @field password
      */
